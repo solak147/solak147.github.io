@@ -9,8 +9,6 @@ jobs:
   deploy-to-github-pages:
     # 使用ubuntu
     runs-on: ubuntu-latest
-    env:
-      PAGES_BASE_PATH: /${{ github.event.repository.name }}/
     steps:
     # 使用checkout actions
     - uses: actions/checkout@v2
@@ -38,6 +36,12 @@ jobs:
     - name: Update base href for GitHub Pages
       working-directory: Prerender/output/wwwroot
       run: |
+        if [[ "${{ github.event.repository.name }}" == *.github.io ]]; then
+            PAGES_BASE_PATH="/"
+        else
+            PAGES_BASE_PATH="/${{ github.event.repository.name }}/"
+        fi
+
         find . -name "*.html" | while read htmlFile; do
             sed -i "s#<base href=\"/\" />#<base href=\"${PAGES_BASE_PATH}\" />#g" "$htmlFile"
         done
@@ -47,8 +51,8 @@ jobs:
       working-directory: Prerender/output/wwwroot
       run: |
         find . -name "*.html" | while read htmlFile; do
-            sed -i 's/<script>var Module; window.__wasmmodulecallback__(); delete window.__wasmmodulecallback__;<\/script>//g' "$htmlFile"
-            sed -i 's#<script src="_framework/dotnet.6.0.14.iiw8sbvu70.js" defer="" integrity="sha256-54cJ6JdGhGbKaLWxHfRYzYbuyRq2wlK/ZDzfSXD3FEs=" crossorigin="anonymous"></script>##g' "$htmlFile"
+            sed -i 's#<script>var Module; window.__wasmmodulecallback__(); delete window.__wasmmodulecallback__;</script>##g' "$htmlFile"
+            sed -E -i 's#<script src="_framework/dotnet[^"]*\.js"[^>]*></script>##g' "$htmlFile"
         done
     
     # 複製index.html內容到404.html
