@@ -25,29 +25,19 @@ jobs:
       
     # 發佈程式到Release資料夾
     - name: Publish .NET Core Project
-      run: dotnet publish Blog/Blog.csproj -c Release -o Prerender/output --nologo
-      
-    # Use NodeJS react-snap utitility to prerender static website
-    - name: prerender Blazor client
-      working-directory: Prerender
-      run: npx react-snap
+      run: dotnet publish Blog/Blog.csproj -c Release -o release --nologo
     
-    # Delete script in all html files to include subfolder
-    - name: Delete script
-      working-directory: Prerender/output/wwwroot
-      run: |
-        find . -name "*.html" | while read htmlFile; do
-            sed -i 's/<script>var Module; window.__wasmmodulecallback__(); delete window.__wasmmodulecallback__;<\/script>//g' $htmlFile
-            sed -i 's/<script src="_framework\/dotnet.6.0.14.iiw8sbvu70.js" defer="" integrity="sha256-54cJ6JdGhGbKaLWxHfRYzYbuyRq2wlK\/ZDzfSXD3FEs=" crossorigin="anonymous"><\/script>//g' $htmlFile
-        done
+    # 修改index.html的base href -- 從"/"改為"/Blog/"
+    #- name: Change base-tag in index.html from / to Blog
+    #  run: sed -i 's/<base href="\/" \/>/<base href="\/Blog\/" \/>/g' release/wwwroot/index.html
     
     # 複製index.html內容到404.html
     - name: copy index.html to 404.html
-      run: cp Prerender/output/wwwroot/index.html Prerender/output/wwwroot/404.html
+      run: cp release/wwwroot/index.html release/wwwroot/404.html
 
     # 加入一個.nojekyll檔案
     - name: Add .nojekyll file
-      run: touch Prerender/output/wwwroot/.nojekyll
+      run: touch release/wwwroot/.nojekyll
     
     # 將release/wwwroot的程式碼，push到gh-pages分支
     - name: Commit wwwroot to GitHub Pages
@@ -55,4 +45,4 @@ jobs:
       with:
         GITHUB_TOKEN: ${{ secrets.BLOGTOKEN }}
         BRANCH: gh-pages
-        FOLDER: Prerender/output/wwwroot
+        FOLDER: release/wwwroot
